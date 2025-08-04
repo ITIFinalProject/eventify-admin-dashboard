@@ -32,6 +32,7 @@ const ReportsManagement = () => {
   const [selectedReport, setSelectedReport] = useState(null);
   const [showActionModal, setShowActionModal] = useState(false);
   const [actionType, setActionType] = useState("");
+  const [showViewModal, setShowViewModal] = useState(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -171,6 +172,11 @@ const ReportsManagement = () => {
     setSelectedReport(report);
     setActionType(action);
     setShowActionModal(true);
+  };
+
+  const openViewModal = (report) => {
+    setSelectedReport(report);
+    setShowViewModal(true);
   };
 
   const getStatusBadge = (status) => {
@@ -382,12 +388,12 @@ const ReportsManagement = () => {
             {report.status === "pending" && (
               <div className="report-actions">
                 <button
-                  className="action-btn review"
-                  onClick={() => openActionModal(report, "review")}
-                  title="Review Event"
+                  className="action-btn view"
+                  onClick={() => openViewModal(report)}
+                  title="View Report Details"
                 >
                   <Eye size={16} />
-                  <span>Review Event</span>
+                  <span>View Report</span>
                 </button>
                 <button
                   className="action-btn ban"
@@ -619,6 +625,166 @@ const ReportsManagement = () => {
                   ? "Delete"
                   : "Rejection"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Report Modal */}
+      {showViewModal && selectedReport && (
+        <div className="modal-overlay">
+          <div className="modal modal-large">
+            <div className="modal-header">
+              <h3>Report Details</h3>
+              <button
+                className="modal-close"
+                onClick={() => setShowViewModal(false)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="report-details-view">
+                <div className="detail-section">
+                  <div className="detail-row">
+                    <strong>Report ID:</strong>
+                    <span>{selectedReport.id}</span>
+                  </div>
+                  <div className="detail-row">
+                    <strong>Status:</strong>
+                    {getStatusBadge(selectedReport.status)}
+                  </div>
+                  <div className="detail-row">
+                    <strong>Report Date:</strong>
+                    <span>{formatDate(selectedReport.createdAt)}</span>
+                  </div>
+                  <div className="detail-row">
+                    <strong>Reason:</strong>
+                    <span>{selectedReport.reason || "Generic Report"}</span>
+                  </div>
+                </div>
+
+                <div className="detail-section">
+                  <h4>Reported Event Information</h4>
+                  <div className="detail-row">
+                    <strong>Event Title:</strong>
+                    <span>
+                      {selectedReport.eventTitle || "Event title not available"}
+                    </span>
+                  </div>
+                  <div className="detail-row">
+                    <strong>Event ID:</strong>
+                    <span>{selectedReport.eventId || "N/A"}</span>
+                  </div>
+                  <div className="detail-row">
+                    <strong>Event Host ID:</strong>
+                    <span>{selectedReport.eventHostId || "N/A"}</span>
+                  </div>
+                </div>
+
+                <div className="detail-section">
+                  <h4>Reporter Information</h4>
+                  <div className="detail-row">
+                    <strong>Reporter Name:</strong>
+                    <span>{selectedReport.reporterName || "Anonymous"}</span>
+                  </div>
+                  <div className="detail-row">
+                    <strong>Reporter ID:</strong>
+                    <span>{selectedReport.reporterId || "N/A"}</span>
+                  </div>
+                </div>
+
+                <div className="detail-section">
+                  <h4>Report Description</h4>
+                  <div className="description-content">
+                    <p>
+                      {selectedReport.description || "No description provided"}
+                    </p>
+                  </div>
+                </div>
+
+                {selectedReport.evidenceImageUrl && (
+                  <div className="detail-section">
+                    <h4>Evidence Image</h4>
+                    <div className="evidence-image-full">
+                      <img
+                        src={selectedReport.evidenceImageUrl}
+                        alt="Evidence"
+                        style={{
+                          maxWidth: "100%",
+                          height: "auto",
+                          borderRadius: "8px",
+                          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {selectedReport.action && (
+                  <div className="detail-section">
+                    <h4>Action Taken</h4>
+                    <div className="detail-row">
+                      <strong>Action:</strong>
+                      {getActionBadge(selectedReport.action)}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowViewModal(false)}
+              >
+                Close
+              </button>
+              {selectedReport.status === "pending" && (
+                <>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => {
+                      setShowViewModal(false);
+                      openActionModal(selectedReport, "review");
+                    }}
+                  >
+                    <Check size={16} />
+                    Mark as Reviewed
+                  </button>
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => {
+                      setShowViewModal(false);
+                      openActionModal(selectedReport, "ban");
+                    }}
+                  >
+                    <UserX size={16} />
+                    Ban User
+                  </button>
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => {
+                      setShowViewModal(false);
+                      openActionModal(selectedReport, "delete");
+                    }}
+                  >
+                    <Trash2 size={16} />
+                    Delete Event
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setShowViewModal(false);
+                      openActionModal(selectedReport, "reject");
+                    }}
+                  >
+                    <X size={16} />
+                    Reject Report
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

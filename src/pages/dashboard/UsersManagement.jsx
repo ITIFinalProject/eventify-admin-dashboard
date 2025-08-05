@@ -17,6 +17,7 @@ import {
   getAllUsers,
   updateUserStatus,
   updateUser,
+  banUser,
 } from "../../services/firestoreService";
 import "../../style/UsersManagement.css";
 
@@ -41,6 +42,9 @@ const UsersManagement = () => {
   useEffect(() => {
     const filterUsers = () => {
       let filtered = users;
+
+      // Filter out admin users
+      filtered = filtered.filter((user) => user.role !== "admin");
 
       if (searchTerm) {
         filtered = filtered.filter(
@@ -115,23 +119,56 @@ const UsersManagement = () => {
         return;
       }
 
-      // Prepare update data with proper defaults
-      const updateData = {
+      // Prepare update data for basic info
+      const basicUpdateData = {
         name: editingUser.name.trim(),
         email: editingUser.email.trim(),
-        status: editingUser.status || "active", // Ensure status is never undefined
       };
 
-      await updateUser(editingUser.id, updateData);
+      const newStatus = editingUser.status || "active";
 
-      setUsers(
-        users.map((user) =>
-          user.id === editingUser.id ? { ...user, ...updateData } : user
+      console.log("Updating user with data:", {
+        ...basicUpdateData,
+        status: newStatus,
+      });
+
+      // Update basic user info first
+      await updateUser(editingUser.id, basicUpdateData);
+
+      // Handle status update - use banUser function for banned status
+      if (newStatus === "banned") {
+        await banUser(editingUser.id, 30); // Ban for 30 days by default
+      } else {
+        await updateUserStatus(editingUser.id, newStatus);
+      }
+
+      // Prepare the complete update data for state update
+      const completeUpdateData = {
+        ...basicUpdateData,
+        status: newStatus,
+      };
+
+      // If user is being banned, add ban-related fields to the state update
+      if (newStatus === "banned") {
+        const bannedAt = new Date();
+        const banUntil = new Date();
+        banUntil.setDate(banUntil.getDate() + 30);
+
+        completeUpdateData.bannedAt = bannedAt;
+        completeUpdateData.banUntil = banUntil;
+      }
+
+      // Update the users state with the new data
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user.id === editingUser.id ? { ...user, ...completeUpdateData } : user
         )
       );
 
       setShowEditModal(false);
       setEditingUser(null);
+
+      console.log("User updated successfully");
     } catch (error) {
       console.error("Error updating user:", error);
       alert("Failed to update user. Please try again.");
@@ -269,9 +306,6 @@ const UsersManagement = () => {
                     <div className="user-info">
                       <span className="user-name">
                         {user.name || "Unnamed User"}
-                      </span>
-                      <span className="user-id">
-                        ID: {user.id.slice(0, 8)}...
                       </span>
                     </div>
                   </div>
@@ -441,12 +475,13 @@ const UsersManagement = () => {
                 <label>Status</label>
                 <select
                   value={editingUser.status || "active"}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    console.log("Status changed to:", e.target.value);
                     setEditingUser({
                       ...editingUser,
                       status: e.target.value,
-                    })
-                  }
+                    });
+                  }}
                 >
                   <option value="active">Active</option>
                   <option value="disabled">Disabled</option>

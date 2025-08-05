@@ -352,9 +352,6 @@ const EventsManagement = () => {
                   <span className="organizer-name">
                     {event.hostName || "Unknown Host"}
                   </span>
-                  <span className="organizer-email">
-                    Host ID: {event.hostId?.slice(0, 10)}...
-                  </span>
                 </div>
               </div>
             </div>

@@ -4,8 +4,8 @@ import {
   doc,
   updateDoc,
   deleteDoc,
-  addDoc,
   getDoc,
+  Timestamp,
 } from "firebase/firestore";
 import { db } from "../firebase/config";
 
@@ -29,7 +29,7 @@ export const updateUserStatus = async (userId, status) => {
     const userRef = doc(db, "users", userId);
     await updateDoc(userRef, {
       status,
-      updatedAt: new Date(),
+      updatedAt: Timestamp.now(),
     });
     return { success: true };
   } catch (error) {
@@ -49,7 +49,7 @@ export const updateUser = async (userId, userData) => {
 
     await updateDoc(userRef, {
       ...cleanUserData,
-      updatedAt: new Date(),
+      updatedAt: Timestamp.now(),
     });
     return { success: true };
   } catch (error) {
@@ -132,52 +132,27 @@ export const updateReportStatus = async (reportId, status, action) => {
 export const banUser = async (userId, banDuration = 30) => {
   try {
     const userRef = doc(db, "users", userId);
-    const banUntil = new Date();
-    banUntil.setDate(banUntil.getDate() + banDuration);
+    const bannedAt = Timestamp.now();
+    const banUntilDate = new Date();
+    banUntilDate.setDate(banUntilDate.getDate() + banDuration);
+    const banUntil = Timestamp.fromDate(banUntilDate);
+
+    console.log("Banning user with:", {
+      userId,
+      bannedAt: bannedAt.toDate(),
+      banUntil: banUntil.toDate(),
+      banDuration,
+    });
 
     await updateDoc(userRef, {
       status: "banned",
+      bannedAt: bannedAt,
       banUntil: banUntil,
-      updatedAt: new Date(),
+      updatedAt: Timestamp.now(),
     });
     return { success: true };
   } catch (error) {
     console.error("Error banning user:", error);
-    throw error;
-  }
-};
-
-// Notifications Service
-export const sendNotificationToUser = async (userId, notification) => {
-  try {
-    const notificationRef = collection(db, "users", userId, "notifications");
-    await addDoc(notificationRef, {
-      ...notification,
-      createdAt: new Date(),
-      read: false,
-    });
-    return { success: true };
-  } catch (error) {
-    console.error("Error sending notification:", error);
-    throw error;
-  }
-};
-
-export const sendWarningNotification = async (userId, reportDetails) => {
-  try {
-    const notification = {
-      type: "warning",
-      title: "Warning: Content Violation",
-      message: `Your content has been reported for: ${reportDetails.reason}. Please review our community guidelines.`,
-      reportId: reportDetails.reportId,
-      eventId: reportDetails.eventId,
-      severity: "medium",
-    };
-
-    await sendNotificationToUser(userId, notification);
-    return { success: true };
-  } catch (error) {
-    console.error("Error sending warning notification:", error);
     throw error;
   }
 };

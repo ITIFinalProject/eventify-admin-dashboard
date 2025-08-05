@@ -378,8 +378,7 @@ const ReportsManagement = () => {
                 <div className="reported-user-info">
                   <UserX size={16} />
                   <span>
-                    Event Host ID: {report.eventHostId?.slice(0, 10) || "N/A"}
-                    ...
+                    Event Host: {report.eventHostName || "Unknown Host"}
                   </span>
                 </div>
               </div>
@@ -524,7 +523,8 @@ const ReportsManagement = () => {
                       <strong>Reported Event:</strong>{" "}
                       {selectedReport.eventTitle}
                       <br />
-                      <strong>Host ID:</strong> {selectedReport.eventHostId}
+                      <strong>Host:</strong>{" "}
+                      {selectedReport.eventHostName || "Unknown Host"}
                     </div>
                   </>
                 )}
@@ -538,7 +538,8 @@ const ReportsManagement = () => {
                       report as resolved.
                     </p>
                     <div className="report-summary">
-                      <strong>User to ban:</strong> {selectedReport.eventHostId}
+                      <strong>User to ban:</strong>{" "}
+                      {selectedReport.eventHostName || "Unknown Host"}
                       <br />
                       <strong>Reason:</strong> {selectedReport.reason}
                     </div>
@@ -648,10 +649,6 @@ const ReportsManagement = () => {
               <div className="report-details-view">
                 <div className="detail-section">
                   <div className="detail-row">
-                    <strong>Report ID:</strong>
-                    <span>{selectedReport.id}</span>
-                  </div>
-                  <div className="detail-row">
                     <strong>Status:</strong>
                     {getStatusBadge(selectedReport.status)}
                   </div>
@@ -674,12 +671,10 @@ const ReportsManagement = () => {
                     </span>
                   </div>
                   <div className="detail-row">
-                    <strong>Event ID:</strong>
-                    <span>{selectedReport.eventId || "N/A"}</span>
-                  </div>
-                  <div className="detail-row">
-                    <strong>Event Host ID:</strong>
-                    <span>{selectedReport.eventHostId || "N/A"}</span>
+                    <strong>Event Host:</strong>
+                    <span>
+                      {selectedReport.eventHostName || "Unknown Host"}
+                    </span>
                   </div>
                 </div>
 
@@ -688,10 +683,6 @@ const ReportsManagement = () => {
                   <div className="detail-row">
                     <strong>Reporter Name:</strong>
                     <span>{selectedReport.reporterName || "Anonymous"}</span>
-                  </div>
-                  <div className="detail-row">
-                    <strong>Reporter ID:</strong>
-                    <span>{selectedReport.reporterId || "N/A"}</span>
                   </div>
                 </div>
 

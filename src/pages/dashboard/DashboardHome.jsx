@@ -32,7 +32,10 @@ const DashboardHome = () => {
         ]);
 
         const activeUsers = users.filter(
-          (user) => user.status !== "banned" && user.status !== "disabled"
+          (user) =>
+            user.status !== "banned" &&
+            user.status !== "disabled" &&
+            user.role !== "admin"
         ).length;
         const publicEvents = events.filter(
           (event) => event.type?.toLowerCase() === "public"
@@ -75,33 +78,29 @@ const DashboardHome = () => {
 
         // Add recent events (last 3)
         const recentEvents = events
-          .filter((event) => event.createdAt)
+          .filter((event) => event.updatedAt)
           .sort(
             (a, b) =>
               new Date(
-                b.createdAt?.seconds ? b.createdAt.seconds * 1000 : b.createdAt
+                b.updatedAt?.seconds ? b.updatedAt.seconds * 1000 : b.updatedAt
               ) -
               new Date(
-                a.createdAt?.seconds ? a.createdAt.seconds * 1000 : a.createdAt
+                a.updatedAt?.seconds ? a.updatedAt.seconds * 1000 : a.updatedAt
               )
           )
           .slice(0, 2);
 
         recentEvents.forEach((event) => {
-          const eventDate = event.date
-            ? new Date(
-                event.date?.seconds ? event.date.seconds * 1000 : event.date
-              ).toLocaleDateString()
-            : "No date set";
+          const eventDate = event.date || "No date set";
           const eventType = event.type ? `(${event.type})` : "";
           activities.push({
             type: "event",
             icon: Calendar,
             iconClass: "events",
-            message: `New ${event.type || "event"} created: "${
+            message: `Event updated: "${
               event.title || "Untitled Event"
             }" ${eventType} - ${eventDate}`,
-            timestamp: event.createdAt,
+            timestamp: event.updatedAt,
           });
         });
 
@@ -131,7 +130,7 @@ const DashboardHome = () => {
           });
         });
 
-        // Sort all activities by timestamp and take the most recent 5
+        // Sort all activities by timestamp and take the most recent 3
         const sortedActivities = activities
           .sort(
             (a, b) =>
@@ -142,7 +141,7 @@ const DashboardHome = () => {
                 a.timestamp?.seconds ? a.timestamp.seconds * 1000 : a.timestamp
               )
           )
-          .slice(0, 5);
+          .slice(0, 3);
 
         setRecentActivity(sortedActivities);
 

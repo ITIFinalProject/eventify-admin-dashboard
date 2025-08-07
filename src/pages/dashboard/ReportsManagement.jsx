@@ -360,7 +360,7 @@ const ReportsManagement = () => {
                       alt="Evidence"
                       style={{
                         maxWidth: "100%",
-                        height: "auto",
+                        height: "400px",
                         borderRadius: "8px",
                         marginTop: "8px",
                         boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
@@ -704,7 +704,7 @@ const ReportsManagement = () => {
                         alt="Evidence"
                         style={{
                           maxWidth: "100%",
-                          height: "auto",
+                          height: "400px",
                           borderRadius: "8px",
                           boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
                         }}

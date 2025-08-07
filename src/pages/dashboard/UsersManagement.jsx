@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import {
   Search,
   Filter,
-  Edit,
   UserX,
   User,
   Mail,
@@ -16,7 +15,6 @@ import {
 import {
   getAllUsers,
   updateUserStatus,
-  updateUser,
   banUser,
 } from "../../services/firestoreService";
 import "../../style/UsersManagement.css";
@@ -27,8 +25,6 @@ const UsersManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [editingUser, setEditingUser] = useState(null);
-  const [showEditModal, setShowEditModal] = useState(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -83,6 +79,45 @@ const UsersManagement = () => {
     }
   };
 
+  const handleToggleBan = async (userId, currentStatus) => {
+    try {
+      if (currentStatus === "banned") {
+        // Reactivate the user
+        await updateUserStatus(userId, "active");
+        setUsers(
+          users.map((user) =>
+            user.id === userId
+              ? {
+                  ...user,
+                  status: "active",
+                  bannedAt: null,
+                  banUntil: null,
+                }
+              : user
+          )
+        );
+      } else {
+        // Ban the user
+        await banUser(userId, 30);
+        setUsers(
+          users.map((user) =>
+            user.id === userId
+              ? {
+                  ...user,
+                  status: "banned",
+                  bannedAt: new Date(),
+                  banUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                }
+              : user
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error toggling user ban status:", error);
+      alert("Failed to update user status. Please try again.");
+    }
+  };
+
   const handleStatusChange = async (userId, newStatus) => {
     try {
       await updateUserStatus(userId, newStatus);
@@ -93,85 +128,6 @@ const UsersManagement = () => {
       );
     } catch (error) {
       console.error("Error updating user status:", error);
-    }
-  };
-
-  const handleEditUser = (user) => {
-    setEditingUser({
-      ...user,
-      status: user.status || "active", // Ensure status has a default value
-    });
-    setShowEditModal(true);
-  };
-
-  const handleSaveUser = async () => {
-    try {
-      // Validate required fields
-      if (!editingUser.name || !editingUser.email) {
-        alert("Please fill in all required fields");
-        return;
-      }
-
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(editingUser.email)) {
-        alert("Please enter a valid email address");
-        return;
-      }
-
-      // Prepare update data for basic info
-      const basicUpdateData = {
-        name: editingUser.name.trim(),
-        email: editingUser.email.trim(),
-      };
-
-      const newStatus = editingUser.status || "active";
-
-      console.log("Updating user with data:", {
-        ...basicUpdateData,
-        status: newStatus,
-      });
-
-      // Update basic user info first
-      await updateUser(editingUser.id, basicUpdateData);
-
-      // Handle status update - use banUser function for banned status
-      if (newStatus === "banned") {
-        await banUser(editingUser.id, 30); // Ban for 30 days by default
-      } else {
-        await updateUserStatus(editingUser.id, newStatus);
-      }
-
-      // Prepare the complete update data for state update
-      const completeUpdateData = {
-        ...basicUpdateData,
-        status: newStatus,
-      };
-
-      // If user is being banned, add ban-related fields to the state update
-      if (newStatus === "banned") {
-        const bannedAt = new Date();
-        const banUntil = new Date();
-        banUntil.setDate(banUntil.getDate() + 30);
-
-        completeUpdateData.bannedAt = bannedAt;
-        completeUpdateData.banUntil = banUntil;
-      }
-
-      // Update the users state with the new data
-      setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user.id === editingUser.id ? { ...user, ...completeUpdateData } : user
-        )
-      );
-
-      setShowEditModal(false);
-      setEditingUser(null);
-
-      console.log("User updated successfully");
-    } catch (error) {
-      console.error("Error updating user:", error);
-      alert("Failed to update user. Please try again.");
     }
   };
 
@@ -326,11 +282,26 @@ const UsersManagement = () => {
                 <td>
                   <div className="actions-cell">
                     <button
-                      className="action-btn edit"
-                      onClick={() => handleEditUser(user)}
-                      title="Edit User"
+                      className={`action-btn ${
+                        user.status === "banned" ? "unban" : "ban"
+                      }`}
+                      onClick={() => handleToggleBan(user.id, user.status)}
+                      title={
+                        user.status === "banned"
+                          ? "Reactivate User"
+                          : "Ban User for 30 Days"
+                      }
+                      style={{
+                        backgroundColor:
+                          user.status === "banned" ? "#10b981" : "#f59e0b",
+                        color: "white",
+                      }}
                     >
-                      <Edit size={16} />
+                      {user.status === "banned" ? (
+                        <User size={16} />
+                      ) : (
+                        <UserX size={16} />
+                      )}
                     </button>
 
                     {user.status !== "disabled" ? (
@@ -424,84 +395,6 @@ const UsersManagement = () => {
               Next
               <ChevronRight size={16} />
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* Edit User Modal */}
-      {showEditModal && editingUser && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal-header">
-              <h3>Edit User</h3>
-              <button
-                className="modal-close"
-                onClick={() => setShowEditModal(false)}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="modal-body">
-              <div className="form-group">
-                <label>Name</label>
-                <input
-                  type="text"
-                  value={editingUser.name || ""}
-                  onChange={(e) =>
-                    setEditingUser({
-                      ...editingUser,
-                      name: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Email</label>
-                <input
-                  type="email"
-                  value={editingUser.email || ""}
-                  onChange={(e) =>
-                    setEditingUser({
-                      ...editingUser,
-                      email: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Status</label>
-                <select
-                  value={editingUser.status || "active"}
-                  onChange={(e) => {
-                    console.log("Status changed to:", e.target.value);
-                    setEditingUser({
-                      ...editingUser,
-                      status: e.target.value,
-                    });
-                  }}
-                >
-                  <option value="active">Active</option>
-                  <option value="disabled">Disabled</option>
-                  <option value="banned">Banned</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="modal-footer">
-              <button
-                className="btn btn-secondary"
-                onClick={() => setShowEditModal(false)}
-              >
-                Cancel
-              </button>
-              <button className="btn btn-primary" onClick={handleSaveUser}>
-                <Check size={16} />
-                Save Changes
-              </button>
-            </div>
           </div>
         </div>
       )}

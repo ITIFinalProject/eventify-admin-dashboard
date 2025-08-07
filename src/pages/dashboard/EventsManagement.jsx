@@ -14,11 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import {
-  getAllEvents,
-  updateEvent,
-  deleteEvent,
-} from "../../services/firestoreService";
+import { getAllEvents, deleteEvent } from "../../services/firestoreService";
 import "../../style/EventsManagement.css";
 
 const EventsManagement = () => {
@@ -27,8 +23,7 @@ const EventsManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [editingEvent, setEditingEvent] = useState(null);
-  const [showEditModal, setShowEditModal] = useState(false);
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [deletingEvent, setDeletingEvent] = useState(null);
@@ -88,38 +83,9 @@ const EventsManagement = () => {
     }
   };
 
-  const handleEditEvent = (event) => {
-    setEditingEvent({ ...event });
-    setShowEditModal(true);
-  };
-
   const handleViewEvent = (event) => {
     setViewingEvent(event);
     setShowViewModal(true);
-  };
-
-  const handleSaveEvent = async () => {
-    try {
-      await updateEvent(editingEvent.id, {
-        title: editingEvent.title,
-        description: editingEvent.description,
-        location: editingEvent.location,
-        type: editingEvent.type,
-        capacity: editingEvent.capacity,
-        category: editingEvent.category,
-      });
-
-      setEvents(
-        events.map((event) =>
-          event.id === editingEvent.id ? editingEvent : event
-        )
-      );
-
-      setShowEditModal(false);
-      setEditingEvent(null);
-    } catch (error) {
-      console.error("Error updating event:", error);
-    }
   };
 
   const handleDeleteEvent = async () => {
@@ -291,13 +257,7 @@ const EventsManagement = () => {
                 >
                   <Eye size={16} />
                 </button>
-                <button
-                  className="action-btn edit"
-                  onClick={() => handleEditEvent(event)}
-                  title="Edit Event"
-                >
-                  <Edit size={16} />
-                </button>
+
                 <button
                   className="action-btn delete"
                   onClick={() => openDeleteModal(event)}
@@ -426,154 +386,6 @@ const EventsManagement = () => {
               Next
               <ChevronRight size={16} />
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Event Modal */}
-      {showEditModal && editingEvent && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal-header">
-              <h3>Edit Event</h3>
-              <button
-                className="modal-close"
-                onClick={() => setShowEditModal(false)}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="modal-body">
-              <div className="form-group">
-                <label>Title</label>
-                <input
-                  type="text"
-                  value={editingEvent.title || ""}
-                  onChange={(e) =>
-                    setEditingEvent({
-                      ...editingEvent,
-                      title: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Description</label>
-                <textarea
-                  rows="4"
-                  value={editingEvent.description || ""}
-                  onChange={(e) =>
-                    setEditingEvent({
-                      ...editingEvent,
-                      description: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Location</label>
-                <input
-                  type="text"
-                  value={editingEvent.location || ""}
-                  onChange={(e) =>
-                    setEditingEvent({
-                      ...editingEvent,
-                      location: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Type</label>
-                <select
-                  value={editingEvent.type || "Public"}
-                  onChange={(e) =>
-                    setEditingEvent({
-                      ...editingEvent,
-                      type: e.target.value,
-                    })
-                  }
-                >
-                  <option value="Public">Public</option>
-                  <option value="Private">Private</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label>Category</label>
-                <input
-                  type="text"
-                  value={editingEvent.category || ""}
-                  onChange={(e) =>
-                    setEditingEvent({
-                      ...editingEvent,
-                      category: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Capacity</label>
-                <input
-                  type="number"
-                  value={editingEvent.capacity || ""}
-                  onChange={(e) =>
-                    setEditingEvent({
-                      ...editingEvent,
-                      capacity: parseInt(e.target.value) || null,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Time</label>
-                <input
-                  type="text"
-                  value={editingEvent.time || ""}
-                  onChange={(e) =>
-                    setEditingEvent({
-                      ...editingEvent,
-                      time: e.target.value,
-                    })
-                  }
-                  placeholder="e.g., 20:30 - 22:30"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Date</label>
-                <input
-                  type="text"
-                  value={editingEvent.date || ""}
-                  onChange={(e) =>
-                    setEditingEvent({
-                      ...editingEvent,
-                      date: e.target.value,
-                    })
-                  }
-                  placeholder="e.g., 2025-08-04 _ 2025-08-05"
-                />
-              </div>
-            </div>
-
-            <div className="modal-footer">
-              <button
-                className="btn btn-secondary"
-                onClick={() => setShowEditModal(false)}
-              >
-                Cancel
-              </button>
-              <button className="btn btn-primary" onClick={handleSaveEvent}>
-                <Check size={16} />
-                Save Changes
-              </button>
-            </div>
           </div>
         </div>
       )}
